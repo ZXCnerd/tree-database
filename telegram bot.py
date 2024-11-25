@@ -37,13 +37,17 @@ def save_unofficial_trees(trees):
 def load_user_stats():
     try:
         with open('user_stats.json', 'r') as file:
-            return json.load(file)
+            user_stats = json.load(file)
+            print("User stats loaded:", user_stats)
+            return user_stats
     except FileNotFoundError:
+        print("user_stats.json not found, initializing empty stats.")
         return {}
 
 def save_user_stats(user_stats):
     with open('user_stats.json', 'w') as file:
         json.dump(user_stats, file)
+        print("User stats saved:", user_stats)
 
 trees = load_trees()
 unofficial_trees = load_unofficial_trees()
@@ -56,7 +60,6 @@ def send_help(message):
         "/list — список деревьев.\n"
         "/add — добавить новое дерево.\n"
         "/info [tree] — информация о дереве с названием [tree].\n"
-        "/update [tree] — обновить данные дерева с названием [tree].\n"
         "/search [query] — поиск деревьев по названию.\n"
         "/unofficial_list — список неподтвержденных деревьев.\n"
         "/approve [tree] — одобрить дерево из списка неподтвержденных.\n"
@@ -127,6 +130,7 @@ def process_tree_description(message, tree_name):
         user_stats[user_id] = {'trees_added': 0}
     user_stats[user_id]['trees_added'] += 1
     save_user_stats(user_stats)
+    print("User stats updated:", user_stats)
 
     print(Fore.CYAN + 't.me/' + str(message.from_user.username), message.text, ' ' * 10,
           Fore.RED + f'[{datetime.datetime.now()}]')
@@ -142,24 +146,6 @@ def tree_info(message):
 
     print(Fore.CYAN + 't.me/' + str(message.from_user.username), message.text, ' ' * 10,
           Fore.RED + f'[{datetime.datetime.now()}]')
-
-@bot.message_handler(commands=['update'])
-def update_tree(message):
-    tree_name = message.text.split(' ', 1)[1] if len(message.text.split(' ')) > 1 else None
-    if tree_name in trees:
-        bot.reply_to(message, f"Введите новое значение для дерева '{tree_name}'.")
-        bot.register_next_step_handler(message, process_update_tree, tree_name)
-    else:
-        bot.reply_to(message, "Дерево не найдено.")
-
-    print(Fore.CYAN + 't.me/' + str(message.from_user.username), message.text, ' ' * 10,
-          Fore.RED + f'[{datetime.datetime.now()}]')
-
-def process_update_tree(message, tree_name):
-    new_info = message.text
-    trees[tree_name] = new_info  # Обновляем данные дерева
-    save_trees(trees)  # Сохраняем обновленные данные в файл
-    bot.reply_to(message, f"Данные о дереве '{tree_name}' успешно обновлены на: {new_info}")
 
 @bot.message_handler(commands=['backup'])
 def backup(message):
@@ -250,8 +236,8 @@ def stats(message):
 
 @bot.message_handler(commands=['my_stats'])
 def my_stats(message):
-    user_id = message.from_user.id
-    if user_id in user_stats:
+    user_id = str(message.from_user.id)
+    if user_stats.get(user_id, 0):
         trees_added = user_stats[user_id]['trees_added']
         stats_message = f"Ваши добавленные деревья: {trees_added}"
     else:
