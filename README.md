@@ -1,6 +1,6 @@
 # tree-database
 
-### *tree database in Ulyanovsk Vinnosky park*
+### *tree database in Ulyanovsk Vinnovskaya grove*
 https://t.me/tree_database_bot
 
 it includes:
